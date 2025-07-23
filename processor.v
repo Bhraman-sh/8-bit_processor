@@ -1,8 +1,7 @@
 module processor(
   input wire clk, reset,
   input wire op, // start operation
-  input wire [19:0] instruction,
-  output wire [7:0] final_out
+  input wire [19:0] instruction
 );
 
   wire load_accumulator;
