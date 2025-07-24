@@ -56,43 +56,43 @@ module controller(
           add_a:
           begin
             alu_signals = 3'b000; // Chooses the add operation
-            acc_mux = 1;  // Takes input from A and B
+            acc_mux = 1;  // Takes input from accumulator and B
           end
 
           sub:
           begin
-            alu_signals = 3'b001; // Chooses the add operation
+            alu_signals = 3'b001; // Chooses the sub operation
             acc_mux = 0;  // Takes input from A and B
           end
 
           sub_a:
           begin
-            alu_signals = 3'b001; // Chooses the add operation
-            acc_mux = 1;  // Takes input from A and B
+            alu_signals = 3'b001; // Chooses the sub operation
+            acc_mux = 1;  // Takes input from accumulator and B
           end
 
           and_:
           begin
-            alu_signals = 3'b010; // Chooses the add operation
+            alu_signals = 3'b010; // Chooses the and operation
             acc_mux = 0;  // Takes input from A and B
           end
 
           and_a:
           begin
-            alu_signals = 3'b010; // Chooses the add operation
-            acc_mux = 1;  // Takes input from A and B
+            alu_signals = 3'b010; // Chooses the and operation
+            acc_mux = 1;  // Takes input from accumulator and B
           end
 
           or_:
           begin
-            alu_signals = 3'b011; // Chooses the add operation
+            alu_signals = 3'b011; // Chooses the or operation
             acc_mux = 0;  // Takes input from A and B
           end
 
           or_a:
           begin
-            alu_signals = 3'b011; // Chooses the add operation
-            acc_mux = 1;  // Takes input from A and B
+            alu_signals = 3'b011; // Chooses the or operation
+            acc_mux = 1;  // Takes input from accumulator and B
           end
 
           shr:
