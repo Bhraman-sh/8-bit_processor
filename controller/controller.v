@@ -4,8 +4,9 @@ module controller(
   input wire clk, reset,
   input wire [3:0] opcode,
   input wire op,
+  output wire [3:0] address,
   output reg [2:0] alu_signals,
-  output reg acc_load, acc_mux
+  output reg acc_load, acc_mux, a_load, b_load
 );
 
   localparam [1:0] no_op = 2'b00, 
@@ -23,30 +24,46 @@ module controller(
                    shr   = 4'b1000;
 
   reg [1:0] state_reg, state_next;
+  reg [3:0] addr_reg, addr_next;
+  reg [3:0] opcode_reg, opcode_next;
 
   always @(posedge clk, posedge reset)
     if (reset) 
     begin
       state_reg <= no_op;
+      addr_reg <= 4'b0000;
+      opcode_reg <= 0;
     end
     else
     begin
       state_reg <= state_next;
+      addr_reg <= addr_next;
+      opcode_reg <= opcode_next;
     end
 
   always @*
   begin
     state_next = state_reg;
     acc_load = 1'b0;
+    a_load = 1'b0;
+    b_load = 1'b0;
+    addr_next = addr_reg;
+    opcode_next = opcode_reg;
 
     case (state_reg)
       no_op:
         if (op)
-          state_next = decode;
+          begin
+            state_next = decode;
+            addr_next = addr_reg + 1;
+            opcode_next = opcode;
+            a_load = 1'b1;
+            b_load = 1'b1;
+          end
       decode:
       begin
         state_next = execute;
-        case (opcode)
+        case (opcode_reg)
           add:
           begin
             alu_signals = 3'b000; // Chooses the add operation
@@ -114,5 +131,6 @@ module controller(
     endcase
   end
 
+  assign address = addr_reg;
 
 endmodule

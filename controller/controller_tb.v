@@ -18,15 +18,17 @@ module controller_tb;
   reg clk, reset;
   reg [3:0] opcode;
   reg op;
+  wire [3:0] address;
   wire [2:0] alu_signals;
-  wire acc_load, acc_mux;
+  wire acc_load, acc_mux, a_load, b_load;
 
   controller uut(
     .clk(clk), .reset(reset),
     .opcode(opcode),
     .op(op),
+    .address(address),
     .alu_signals(alu_signals),
-    .acc_load(acc_load), .acc_mux(acc_mux)
+    .acc_load(acc_load), .acc_mux(acc_mux), .a_load(a_load), .b_load(b_load)
   );
 
   always

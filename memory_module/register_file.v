@@ -6,7 +6,7 @@ module register_file(
   output wire [19:0] out_data
 );
 
-  reg [19:0] file [3:0];
+  reg [19:0] file [15:0];
   reg [3:0] addr_reg, addr_next;
   reg [19:0] write_reg, write_next;
   

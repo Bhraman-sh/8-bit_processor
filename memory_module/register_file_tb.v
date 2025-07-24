@@ -3,6 +3,7 @@
 module register_file_tb;
 
   localparam T = 20;
+  integer i;
 
   reg clk, reset;
   reg [19:0] in_data;
@@ -44,26 +45,23 @@ module register_file_tb;
      @(negedge reset);
      @(negedge clk);
 
-     in_data = 20'b0000_0000_0000_0000_0000;
-     wr = 1'b1;
-     address = 4'b0000;
-     @(negedge clk);
+     for (i=0; i < 10; i = i + 1)
+     begin
+       in_data = in_data + 1;
+       wr = 1'b1;
+       address = i;
+       @(negedge clk);
 
-     wr = 1'b0;
-     @(negedge clk);
-
-     in_data = 20'b0000_0000_0000_0000_0001;
-     wr = 1'b1;
-     address = 4'b0001;
-     @(negedge clk);
-
-     wr = 1'b0;
-     @(negedge clk);
+       wr = 1'b0;
+       @(negedge clk);
+     end
 
      address = 4'b0000;
-     @(negedge clk);
-     address = 4'b0001;
-     @(negedge clk);
+     for (i=0; i < 10; i = i + 1)
+     begin
+       address = i;
+       @(negedge clk);
+     end
 
      $finish;
   end
