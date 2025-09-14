@@ -32,7 +32,7 @@ module controller(
     begin
       state_reg <= no_op;
       addr_reg <= 4'b0000;
-      opcode_reg <= 0;
+      opcode_reg <= 4'b0;
     end
     else
     begin
