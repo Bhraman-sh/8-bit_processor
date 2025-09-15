@@ -1,38 +1,63 @@
 // Instruction format [Op code, 4][Operand B, 8][Operand A, 8]
+`include "vh_files/instructions.vh"
+`include "vh_files/states.vh"
 
 module controller(
   input wire clk, reset,
-  input wire [3:0] opcode,
-  input wire op,
-  output wire [3:0] address,
-  output reg [2:0] alu_signals,
-  output reg acc_load, acc_mux, a_load, b_load
+  input wire [7:0] opcode,
+
+  // ALU RELATED CONTROL SIGNALS
+  output reg [2:0] alu_sel,
+
+  // REGISTER BANK RELATED CONTROL SIGNALS
+  output reg acc_sel,
+  output reg [1:0] alu_b_sel, bank_out_sel,
+  output reg [3:0] destination_reg_sel,
+  output reg [2:0] source_reg_sel,
+
+  // BUS RELATED CONTROL SIGNALS
+  output reg memory_enable_bus, memory_load_bus,
+  output reg opcode_reg_load_bus,
+  output reg register_bank_enable_bus, register_bank_load_bus,
+
+  // MEMORY RELATED CONTROL SIGNALS
+  output reg write,
+  output wire [3:0] address
 );
 
-  localparam [1:0] no_op = 2'b00, 
-                   decode = 2'b01,
-                   execute = 2'b10;
+  reg [7:0] opcode_reg, addr_reg, addr_next, opcode_next;
+  reg [2:0] state_reg, state_next;
 
-  localparam [3:0] add   = 4'b0000,
-                   add_a = 4'b0001,
-                   sub   = 4'b0010,
-                   sub_a = 4'b0011,
-                   and_  = 4'b0100,
-                   and_a = 4'b0101,
-                   or_   = 4'b0110,
-                   or_a  = 4'b0111,
-                   shr   = 4'b1000;
+  // ALU RELATED CONTROL SIGNALS
+  reg [2:0] alu_sel_decoder;
 
-  reg [1:0] state_reg, state_next;
-  reg [3:0] addr_reg, addr_next;
-  reg [3:0] opcode_reg, opcode_next;
+  // REGISTER BANK RELATED CONTROL SIGNALS
+  reg acc_sel_decoder;
+  reg [1:0] alu_b_sel_decoder, bank_out_sel_decoder;
+  reg [2:0] source_reg_sel_decoder;
+  reg [3:0] destination_reg_flag_decoder;
+
+  // MEMORY RELATED CONTROL SIGNALS
+  reg write_decoder;
+  reg [3:0] address_decoder;
+
+  decoder decoder_module(
+    .opcode(opcode_reg),
+    .alu_sel(alu_sel_decoder),
+    .acc_sel(acc_sel_decoder),
+    .alu_b_sel(alu_b_sel_decoder), .bank_out_sel(bank_out_sel_decoder),
+    .source_reg_sel(source_reg_sel_decoder),
+    .destination_reg_flag(destination_reg_flag_decoder),
+    .write(write_decoder),
+    .address(address_decoder)
+  )
 
   always @(posedge clk, posedge reset)
     if (reset) 
     begin
-      state_reg <= no_op;
-      addr_reg <= 4'b0000;
-      opcode_reg <= 4'b0;
+      state_reg <= `fetch;
+      addr_reg <= 8'b0;
+      opcode_reg <= 8'b0;
     end
     else
     begin
@@ -41,96 +66,45 @@ module controller(
       opcode_reg <= opcode_next;
     end
 
-  always @*
-  begin
-    state_next = state_reg;
-    acc_load = 1'b0;
-    a_load = 1'b0;
-    b_load = 1'b0;
-    addr_next = addr_reg;
-    opcode_next = opcode_reg;
+    always @* begin
+      // controller registers
+      state_next = state_reg;
+      addr_next = addr_reg;
+      opcode_next = opcode_reg;
 
-    case (state_reg)
-      no_op:
-        if (op)
-          begin
-            state_next = decode;
-            addr_next = addr_reg + 1;
-            opcode_next = opcode;
-            a_load = 1'b1;
-            b_load = 1'b1;
-          end
-      decode:
-      begin
-        state_next = execute;
-        case (opcode_reg)
-          add:
-          begin
-            alu_signals = 3'b000; // Chooses the add operation
-            acc_mux = 0;  // Takes input from A and B
-          end
+      // register bank
+      destination_reg_sel = 4'b0;
 
-          add_a:
-          begin
-            alu_signals = 3'b000; // Chooses the add operation
-            acc_mux = 1;  // Takes input from accumulator and B
-          end
+      // BUS
+      memory_enable_bus = 1'b0; memory_load_bus = 1'b0;
+      opcode_reg_load_bus = 1'b0;
+      register_bank_enable_bus = 1'b0; register_bank_load_bus = 1'b0;
 
-          sub:
-          begin
-            alu_signals = 3'b001; // Chooses the sub operation
-            acc_mux = 0;  // Takes input from A and B
-          end
+      case (state_reg)
+        `fetch:
+        begin
+          state_next = `decode;
+          opcode_next = opcode;
+          memory_enable_bus = 1'b1;
+          opcode_reg_load_bus = 1'b1;
 
-          sub_a:
-          begin
-            alu_signals = 3'b001; // Chooses the sub operation
-            acc_mux = 1;  // Takes input from accumulator and B
-          end
+          addr_next = addr_reg + 1;
+        end
 
-          and_:
-          begin
-            alu_signals = 3'b010; // Chooses the and operation
-            acc_mux = 0;  // Takes input from A and B
-          end
+        `decode:
+        begin
+          state_next = `execute;
 
-          and_a:
-          begin
-            alu_signals = 3'b010; // Chooses the and operation
-            acc_mux = 1;  // Takes input from accumulator and B
-          end
+          alu_sel = alu_sel_decoder;
+          acc_sel = acc_sel_decoder;
+          alu_b_sel = alu_sel_decoder; bank_out_sel = bank_out_sel_decoder;
+          source_reg_sel = source_reg_sel_decoder;
+        end
 
-          or_:
-          begin
-            alu_signals = 3'b011; // Chooses the or operation
-            acc_mux = 0;  // Takes input from A and B
-          end
-
-          or_a:
-          begin
-            alu_signals = 3'b011; // Chooses the or operation
-            acc_mux = 1;  // Takes input from accumulator and B
-          end
-
-          shr:
-          begin
-            alu_signals = 3'b100;
-            acc_mux = 0;
-          end
-
-          default:
-            state_next = no_op;
-        endcase
-      end
-
-      execute:
-      begin
-        acc_load = 1'b1;
-        state_next = no_op;
-      end
-    endcase
-  end
-
-  assign address = addr_reg;
+        `execute:
+          destination_reg_sel = destination_reg_flag_decoder;
+          state_next = `fetch;
+      endcase
+    end
 
 endmodule
