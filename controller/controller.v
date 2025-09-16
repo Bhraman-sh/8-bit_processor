@@ -1,9 +1,9 @@
 // Instruction format [Op code, 4][Operand B, 8][Operand A, 8]
-`include "vh_files/instructions.vh"
-`include "vh_files/states.vh"
+`include "/home/bhraman/Documents/Sem7/FPGA-elective/Verilog/lab2/8-bit_processor/controller/vh_files/instructions.vh"
+`include "/home/bhraman/Documents/Sem7/FPGA-elective/Verilog/lab2/8-bit_processor/controller/vh_files/states.vh"
 
 module controller(
-  input wire clk, reset,
+  input wire clk, reset, op,
   input wire [7:0] opcode,
 
   // ALU RELATED CONTROL SIGNALS
@@ -29,17 +29,17 @@ module controller(
   reg [2:0] state_reg, state_next;
 
   // ALU RELATED CONTROL SIGNALS
-  reg [2:0] alu_sel_decoder;
+  wire [2:0] alu_sel_decoder;
 
   // REGISTER BANK RELATED CONTROL SIGNALS
-  reg acc_sel_decoder;
-  reg [1:0] alu_b_sel_decoder, bank_out_sel_decoder;
-  reg [2:0] source_reg_sel_decoder;
-  reg [3:0] destination_reg_flag_decoder;
+  wire acc_sel_decoder;
+  wire [1:0] alu_b_sel_decoder, bank_out_sel_decoder;
+  wire [2:0] source_reg_sel_decoder;
+  wire [3:0] destination_reg_flag_decoder;
 
   // MEMORY RELATED CONTROL SIGNALS
-  reg write_decoder;
-  reg [3:0] address_decoder;
+  wire write_decoder;
+  wire [3:0] address_decoder;
 
   decoder decoder_module(
     .opcode(opcode_reg),
@@ -50,7 +50,7 @@ module controller(
     .destination_reg_flag(destination_reg_flag_decoder),
     .write(write_decoder),
     .address(address_decoder)
-  )
+  );
 
   always @(posedge clk, posedge reset)
     if (reset) 
@@ -83,12 +83,15 @@ module controller(
       case (state_reg)
         `fetch:
         begin
-          state_next = `decode;
-          opcode_next = opcode;
-          memory_enable_bus = 1'b1;
-          opcode_reg_load_bus = 1'b1;
+          if (op)
+          begin
+            state_next = `decode;
+            opcode_next = opcode;
+            memory_enable_bus = 1'b1;
+            opcode_reg_load_bus = 1'b1;
 
-          addr_next = addr_reg + 1;
+            addr_next = addr_reg + 1;
+          end
         end
 
         `decode:
@@ -102,9 +105,13 @@ module controller(
         end
 
         `execute:
+        begin
           destination_reg_sel = destination_reg_flag_decoder;
           state_next = `fetch;
+        end
       endcase
     end
+
+    assign address = addr_reg;
 
 endmodule
