@@ -1,5 +1,5 @@
 // Externally controllable registers
-module register_8bit(
+module special_reg(
   input wire clk, reset,
   input wire load,
   input wire [7:0] reg_in,
@@ -11,7 +11,7 @@ module register_8bit(
 
   always @(posedge clk, posedge reset)
     if (reset)
-      reg_reg <= 8'h11;
+      reg_reg <= 8'h55;
     else
       reg_reg <= reg_next;
 

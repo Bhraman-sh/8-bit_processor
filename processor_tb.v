@@ -16,7 +16,7 @@ module processor_tb;
     .op(op),
     .in_data(in_data),
     .write_memory(write_memory),
-    .user_address(user_address)
+   .user_address(user_address)
   );
 
   always

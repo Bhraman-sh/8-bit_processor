@@ -14,82 +14,61 @@ module decoder(
 
   // MEMORY RELATED CONTROL SIGNALS
   output reg write,
-  output wire [3:0] address
+  output wire [3:0] address,
+  output reg [1:0] state_control
 );
 
+  // MOVE DECODER SIGNALS
+  wire acc_sel_move;
+  wire [2:0] source_reg_sel_move;
+  wire [3:0] destination_reg_flag_move;
+
+  // ARITHMETIC DECODER SIGNALS
+  wire [2:0] alu_sel_arith;
+  wire acc_sel_arith;
+  wire [1:0] alu_b_sel_arith;
+  wire [3:0] destination_reg_flag_arith;
+
+  move_decoder move_decoder_m(
+    .opcode(opcode),
+    .acc_sel(acc_sel_move),
+    .source_reg_sel(source_reg_sel_move),
+    .destination_reg_flag_move(destination_reg_flag_move)
+  );
+
+  arithmetic_decoder arithmetic_decoder_m(
+    .opcode(opcode),
+    .alu_sel(alu_sel_arith),
+    .acc_sel(acc_sel_arith),
+    .alu_b_sel(alu_b_sel_arith),
+    .destination_reg_flag_move(destination_reg_flag_arith)
+  )
+  
   always @* begin
-    case (opcode)
-      `MOV_A_B:
+    state_control = 2'b00;
+
+    case ({(opcode >= 8'h00 && opcode <= 8'h0b), (opcode >= 8'h0c && opcode <= 8'h17), (opcode >= 8'h18 && opcode <= 8'h81b)})
+      3'b100:  // MOVE INSTRUCTIONS
       begin
-        source_reg_sel = 3'b001;
-        destination_reg_flag = 4'b0001;
+        acc_sel = acc_sel_move;
+        source_reg_sel = source_reg_sel_move;
+        destination_reg_flag = destination_reg_flag_move;
       end
 
-      `MOV_A_C:
+      3'b010:  // ARITHMETIC INSTRUCTIONS
       begin
-        source_reg_sel = 3'b010;
-        destination_reg_flag = 4'b0001;
+        alu_sel = alu_sel_arith;
+        acc_sel = acc_sel_arith;
+        alu_b_sel = alu_b_sel_arith;
+        destination_reg_flag = destination_reg_flag_arith;
       end
 
-      `MOV_A_D:
+      3'b001:
       begin
-        source_reg_sel = 3'b011;
-        destination_reg_flag = 4'b0001;
+        destination_reg_flag = destination_reg_flag_memory;
+        state_control = 2'b01;
       end
-
-      `MOV_B_A:
-      begin
-        source_reg_sel = 3'b000;
-        destination_reg_flag = 4'b0010;
-      end
-
-      `MOV_B_C:
-      begin
-        source_reg_sel = 3'b010;
-        destination_reg_flag = 4'b0010;
-      end
-
-      `MOV_B_D:
-      begin
-        source_reg_sel = 3'b011;
-        destination_reg_flag = 4'b0010;
-      end
-
-      `MOV_C_B:
-      begin
-        source_reg_sel = 3'b001;
-        destination_reg_flag = 4'b0100;
-      end
-
-      `MOV_C_A: begin
-        source_reg_sel = 3'b000;
-        destination_reg_flag = 4'b0100;
-      end
-
-      `MOV_C_D:
-      begin
-        source_reg_sel = 3'b011;
-        destination_reg_flag = 4'b0100;
-      end
-
-      `MOV_D_B:
-      begin
-        source_reg_sel = 3'b001;
-        destination_reg_flag = 4'b1000;
-      end
-
-      `MOV_D_C:
-      begin
-        source_reg_sel = 3'b010;
-        destination_reg_flag = 4'b1000;
-      end
-
-      `MOV_D_A:
-      begin
-        source_reg_sel = 3'b000;
-        destination_reg_flag = 4'b1000;
-      end
-      endcase
+    endcase
   end
 
 endmodule

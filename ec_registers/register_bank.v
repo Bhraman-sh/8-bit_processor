@@ -19,7 +19,7 @@ module register_bank(
   
   wire load_a, load_b, load_c, load_d;
 
-  register_8bit register_a(
+  special_reg register_a(
     .clk(clk), .reset(reset),
     .load(load_a),
     .reg_in(a_in),
@@ -117,4 +117,5 @@ module register_bank(
   end
 
   assign alu_acc_out = a_out;
+
 endmodule

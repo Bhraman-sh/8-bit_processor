@@ -25,8 +25,14 @@ module controller(
   output wire [3:0] address
 );
 
-  reg [7:0] opcode_reg, addr_reg, addr_next, opcode_next;
+  reg [7:0] opcode_reg, opcode_next;
+  reg [7:0] pc_reg, pc_next;    // Program counter
+  reg [7:0] address_reg, address_next;  // Address for other memory operations
+
   reg [2:0] state_reg, state_next;
+
+  // BUFFER: For register bank input from memory
+  reg [7:0] source_reg, source_next;
 
   // ALU RELATED CONTROL SIGNALS
   wire [2:0] alu_sel_decoder;
@@ -41,6 +47,9 @@ module controller(
   wire write_decoder;
   wire [3:0] address_decoder;
 
+  // STATE CONTROL
+  wire [1:0] state_control;
+
   decoder decoder_module(
     .opcode(opcode_reg),
     .alu_sel(alu_sel_decoder),
@@ -49,27 +58,32 @@ module controller(
     .source_reg_sel(source_reg_sel_decoder),
     .destination_reg_flag(destination_reg_flag_decoder),
     .write(write_decoder),
-    .address(address_decoder)
+    .address(address_decoder),
+    .state_control(state_control)
   );
 
   always @(posedge clk, posedge reset)
     if (reset) 
     begin
       state_reg <= `fetch;
-      addr_reg <= 8'b0;
+      pc_reg <= 8'b0;
       opcode_reg <= 8'b0;
+      address_reg <= 8'b0;
+      source_reg <= 8'b0;
     end
     else
     begin
       state_reg <= state_next;
-      addr_reg <= addr_next;
+      pc_reg <= pc_next;
       opcode_reg <= opcode_next;
+      address_reg <= address_next;
+      source_reg <= source_next;
     end
 
     always @* begin
       // controller registers
       state_next = state_reg;
-      addr_next = addr_reg;
+      pc_next = pc_reg;
       opcode_next = opcode_reg;
 
       // register bank
@@ -90,7 +104,7 @@ module controller(
             memory_enable_bus = 1'b1;
             opcode_reg_load_bus = 1'b1;
 
-            addr_next = addr_reg + 1;
+            pc_next = pc_reg + 1;
           end
         end
 
@@ -106,12 +120,30 @@ module controller(
 
         `execute:
         begin
-          destination_reg_sel = destination_reg_flag_decoder;
-          state_next = `fetch;
+          if (state_contol == 2'b00)
+          begin
+            destination_reg_sel = destination_reg_flag_decoder;
+            state_next = `fetch;
+          end
+          else
+            state_next = `operand_fetch;
         end
+
+        `operand_fetch:
+        begin
+          memory_enable_bus = 1'b1;
+          register_bank_load_bus = 1'b1;
+          source_next = opcode;
+          pc_next = pc_reg + 1;
+          source_reg_sel = 3'b100;
+          state_next = `store:
+        end
+
+        `store:
+          destination_reg_sel = destination_reg_flag_decoder;
       endcase
     end
 
-    assign address = addr_reg;
+    assign address = pc_reg;
 
 endmodule
