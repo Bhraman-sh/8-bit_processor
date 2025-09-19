@@ -22,7 +22,7 @@ module controller(
 
   // MEMORY RELATED CONTROL SIGNALS
   output reg write,
-  output wire [3:0] address
+  output reg [7:0] address
 );
 
   reg [7:0] opcode_reg, opcode_next;
@@ -68,7 +68,6 @@ module controller(
       state_reg <= `fetch;
       pc_reg <= 8'b0;
       opcode_reg <= 8'b0;
-      address_reg <= 8'b0;
       source_reg <= 8'b0;
     end
     else
@@ -76,7 +75,6 @@ module controller(
       state_reg <= state_next;
       pc_reg <= pc_next;
       opcode_reg <= opcode_next;
-      address_reg <= address_next;
       source_reg <= source_next;
     end
 
@@ -93,6 +91,12 @@ module controller(
       memory_enable_bus = 1'b0; memory_load_bus = 1'b0;
       opcode_reg_load_bus = 1'b0;
       register_bank_enable_bus = 1'b0; register_bank_load_bus = 1'b0;
+
+      // ADDRESS
+      address = pc_reg;
+
+      // MEMORY 
+      write = 1'b0;
 
       case (state_reg)
         `fetch:
@@ -120,13 +124,20 @@ module controller(
 
         `execute:
         begin
-          if (state_contol == 2'b00)
-          begin
-            destination_reg_sel = destination_reg_flag_decoder;
-            state_next = `fetch;
-          end
-          else
-            state_next = `operand_fetch;
+          case (state_control)
+            2'b00:
+            begin
+              destination_reg_sel = destination_reg_flag_decoder;
+              state_next = `fetch;
+            end
+
+            2'b01:
+              state_next = `operand_fetch;
+
+            2'b10:
+              state_next = `address_fetch;
+
+          endcase
         end
 
         `operand_fetch:
@@ -136,14 +147,44 @@ module controller(
           source_next = opcode;
           pc_next = pc_reg + 1;
           source_reg_sel = 3'b100;
-          state_next = `store:
+          state_next = `operand_load;
+        end
+
+        `operand_load:
+        begin
+          destination_reg_sel = destination_reg_flag_decoder;
+          state_next = `fetch;
+        end
+
+        `address_fetch:
+        begin
+          memory_enable_bus = 1'b1;
+          opcode_reg_load_bus = 1'b1;
+          opcode_reg = opcode;
+          pc_next = pc_reg + 1;
+
+          state_next = `direct_addr;
+        end
+
+        `direct_addr:
+        begin
+          address = opcode_reg;
+          register_bank_enable_bus = 1'b1;
+          memory_load_bus = 1'b1;
+          
+          state_next = `store;
         end
 
         `store:
-          destination_reg_sel = destination_reg_flag_decoder;
+        begin
+          address = opcode_reg;
+          register_bank_enable_bus = 1'b1;
+          memory_load_bus = 1'b1;
+          write = 1'b1;
+
+          state_next = `fetch;
+        end
       endcase
     end
-
-    assign address = pc_reg;
 
 endmodule

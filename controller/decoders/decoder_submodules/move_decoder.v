@@ -54,7 +54,8 @@ module move_decoder(
         destination_reg_flag = 4'b0100;
       end
 
-      `MOV_C_A: begin
+      `MOV_C_A:
+      begin
         source_reg_sel = 3'b000;
         destination_reg_flag = 4'b0100;
       end
@@ -82,7 +83,7 @@ module move_decoder(
         source_reg_sel = 3'b000;
         destination_reg_flag = 4'b1000;
       end
-      endcase
+    endcase
   end
 
 endmodule

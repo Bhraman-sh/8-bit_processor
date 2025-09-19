@@ -1,3 +1,5 @@
+`include "/home/bhraman/Documents/Sem7/FPGA-elective/Verilog/lab2/8-bit_processor/controller/vh_files/instructions.vh"
+
 module arithmetic_decoder(
   input wire [7:0] opcode,
   output reg [2:0] alu_sel,

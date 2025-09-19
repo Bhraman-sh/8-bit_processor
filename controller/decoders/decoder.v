@@ -29,11 +29,16 @@ module decoder(
   wire [1:0] alu_b_sel_arith;
   wire [3:0] destination_reg_flag_arith;
 
+  // MEMORY DECODER SIGNALS
+  wire [1:0] bank_out_sel_memory;
+  wire [3:0] destination_reg_flag_memory;
+  wire [1:0] state_control_memory;
+
   move_decoder move_decoder_m(
     .opcode(opcode),
     .acc_sel(acc_sel_move),
     .source_reg_sel(source_reg_sel_move),
-    .destination_reg_flag_move(destination_reg_flag_move)
+    .destination_reg_flag(destination_reg_flag_move)
   );
 
   arithmetic_decoder arithmetic_decoder_m(
@@ -41,13 +46,20 @@ module decoder(
     .alu_sel(alu_sel_arith),
     .acc_sel(acc_sel_arith),
     .alu_b_sel(alu_b_sel_arith),
-    .destination_reg_flag_move(destination_reg_flag_arith)
-  )
+    .destination_reg_flag(destination_reg_flag_arith)
+  );
+
+  memory_decoder memory_decoder_m(
+    .opcode(opcode),
+    .bank_out_sel(bank_out_sel_memory),
+    .destination_reg_flag(destination_reg_flag_memory),
+    .state_control(state_control_memory)
+  );
   
   always @* begin
     state_control = 2'b00;
 
-    case ({(opcode >= 8'h00 && opcode <= 8'h0b), (opcode >= 8'h0c && opcode <= 8'h17), (opcode >= 8'h18 && opcode <= 8'h81b)})
+    case ({(opcode >= 8'h00 && opcode <= 8'h0b), (opcode >= 8'h0c && opcode <= 8'h17), (opcode >= 8'h18 && opcode <= 8'h1f)})
       3'b100:  // MOVE INSTRUCTIONS
       begin
         acc_sel = acc_sel_move;
@@ -65,8 +77,9 @@ module decoder(
 
       3'b001:
       begin
+        bank_out_sel = bank_out_sel_memory;
         destination_reg_flag = destination_reg_flag_memory;
-        state_control = 2'b01;
+        state_control = state_control_memory;
       end
     endcase
   end

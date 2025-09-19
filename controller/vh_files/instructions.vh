@@ -42,3 +42,10 @@
 `define MVI_B 8'h19
 `define MVI_C 8'h1a
 `define MVI_D 8'h1b
+
+// MVI_ADD_A: Moves The value in A reigster to specified location
+`define MVI_ADD_A 8'h1c
+`define MVI_ADD_B 8'h1d
+`define MVI_ADD_C 8'h1e
+`define MVI_ADD_D 8'h1f
+
