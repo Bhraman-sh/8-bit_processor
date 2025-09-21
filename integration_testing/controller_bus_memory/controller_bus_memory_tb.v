@@ -5,7 +5,7 @@ module controller_bus_memory_tb;
   reg clk, reset;
   reg op;
   reg [7:0] data_in;
-  reg [3:0] user_address;
+  reg [7:0] user_address;
   reg write_memory;
 
   controller_bus_memory uut(
@@ -33,7 +33,7 @@ module controller_bus_memory_tb;
     @(negedge clk);
 
     op = 1'b0;
-    user_address = 4'b0000;
+    user_address = 8'b00000000;
     data_in = 8'h00;
     write_memory = 1'b1;
     @(negedge clk);
@@ -41,7 +41,7 @@ module controller_bus_memory_tb;
     write_memory = 1'b0;
     @(negedge clk);
 
-    user_address = 4'b0001;
+    user_address = 8'b00000001;
     data_in = 8'h01;
     write_memory = 1'b1;
     @(negedge clk);
@@ -49,7 +49,7 @@ module controller_bus_memory_tb;
     write_memory = 1'b0;
     @(negedge clk);
 
-    user_address = 4'b0010;
+    user_address = 8'b00000010;
     data_in = 8'h02;
     write_memory = 1'b1;
     @(negedge clk);
@@ -57,11 +57,11 @@ module controller_bus_memory_tb;
     write_memory = 1'b0;
     @(negedge clk);
 
-    user_address = 4'b0000;
+    user_address = 8'b00000000;
     @(negedge clk);
-    user_address = 4'b0001;
+    user_address = 8'b00000001;
     @(negedge clk);
-    user_address = 4'b0010;
+    user_address = 8'b00000010;
     @(negedge clk);
 
     op = 1'b1;

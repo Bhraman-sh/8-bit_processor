@@ -2,14 +2,15 @@ module controller_bus_memory(
   input wire clk, reset,
   input wire op,
   input wire [7:0] data_in,
-  input wire [3:0] user_address,
+  input wire [7:0] user_address,
   input wire write_memory
 );
+  wire [7:0] opcode_memory;
   wire [7:0] opcode;
 
   wire memory_enable, opcode_reg_load;
-  wire [3:0] address;
-  wire [3:0] cu_address;
+  wire [7:0] address;
+  wire [7:0] cu_address;
 
   assign address = op ? cu_address: user_address;
 
@@ -23,7 +24,9 @@ module controller_bus_memory(
 
   bus bus_m(
     .memory_enable(memory_enable),
-    .opcode_reg_load(opcode_reg_load)
+    .opcode_reg_load(opcode_reg_load),
+    .memory_out(opcode_memory),
+    .opcode_reg_in(opcode)
   );
 
   register_file register_file_m(
@@ -31,7 +34,7 @@ module controller_bus_memory(
     .in_data(data_in),
     .address(address),
     .wr(write_memory),
-    .out_data(opcode)
+    .out_data(opcode_memory)
   );
 
   // assign address = load_memory ? address_in;

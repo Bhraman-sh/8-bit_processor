@@ -14,6 +14,7 @@ module controller(
   output reg [1:0] alu_b_sel, bank_out_sel,
   output reg [3:0] destination_reg_sel,
   output reg [2:0] source_reg_sel,
+  output wire [7:0] bank_data_in,
 
   // BUS RELATED CONTROL SIGNALS
   output reg memory_enable_bus, memory_load_bus,
@@ -78,113 +79,115 @@ module controller(
       source_reg <= source_next;
     end
 
-    always @* begin
-      // controller registers
-      state_next = state_reg;
-      pc_next = pc_reg;
-      opcode_next = opcode_reg;
+  always @* begin
+    // controller registers
+    state_next = state_reg;
+    pc_next = pc_reg;
+    opcode_next = opcode_reg;
 
-      // register bank
-      destination_reg_sel = 4'b0;
+    // register bank
+    destination_reg_sel = 4'b0;
 
-      // BUS
-      memory_enable_bus = 1'b0; memory_load_bus = 1'b0;
-      opcode_reg_load_bus = 1'b0;
-      register_bank_enable_bus = 1'b0; register_bank_load_bus = 1'b0;
+    // BUS
+    memory_enable_bus = 1'b0; memory_load_bus = 1'b0;
+    opcode_reg_load_bus = 1'b0;
+    register_bank_enable_bus = 1'b0; register_bank_load_bus = 1'b0;
 
-      // ADDRESS
-      address = pc_reg;
+    // ADDRESS
+    address = pc_reg;
 
-      // MEMORY 
-      write = 1'b0;
+    // MEMORY 
+    write = 1'b0;
 
-      case (state_reg)
-        `fetch:
+    case (state_reg)
+      `fetch:
+      begin
+        if (op)
         begin
-          if (op)
-          begin
-            state_next = `decode;
-            opcode_next = opcode;
-            memory_enable_bus = 1'b1;
-            opcode_reg_load_bus = 1'b1;
-
-            pc_next = pc_reg + 1;
-          end
-        end
-
-        `decode:
-        begin
-          state_next = `execute;
-
-          alu_sel = alu_sel_decoder;
-          acc_sel = acc_sel_decoder;
-          alu_b_sel = alu_sel_decoder; bank_out_sel = bank_out_sel_decoder;
-          source_reg_sel = source_reg_sel_decoder;
-        end
-
-        `execute:
-        begin
-          case (state_control)
-            2'b00:
-            begin
-              destination_reg_sel = destination_reg_flag_decoder;
-              state_next = `fetch;
-            end
-
-            2'b01:
-              state_next = `operand_fetch;
-
-            2'b10:
-              state_next = `address_fetch;
-
-          endcase
-        end
-
-        `operand_fetch:
-        begin
-          memory_enable_bus = 1'b1;
-          register_bank_load_bus = 1'b1;
-          source_next = opcode;
-          pc_next = pc_reg + 1;
-          source_reg_sel = 3'b100;
-          state_next = `operand_load;
-        end
-
-        `operand_load:
-        begin
-          destination_reg_sel = destination_reg_flag_decoder;
-          state_next = `fetch;
-        end
-
-        `address_fetch:
-        begin
+          state_next = `decode;
+          opcode_next = opcode;
           memory_enable_bus = 1'b1;
           opcode_reg_load_bus = 1'b1;
-          opcode_reg = opcode;
+
           pc_next = pc_reg + 1;
-
-          state_next = `direct_addr;
         end
+      end
 
-        `direct_addr:
-        begin
-          address = opcode_reg;
-          register_bank_enable_bus = 1'b1;
-          memory_load_bus = 1'b1;
-          
-          state_next = `store;
-        end
+      `decode:
+      begin
+        state_next = `execute;
 
-        `store:
-        begin
-          address = opcode_reg;
-          register_bank_enable_bus = 1'b1;
-          memory_load_bus = 1'b1;
-          write = 1'b1;
+        alu_sel = alu_sel_decoder;
+        acc_sel = acc_sel_decoder;
+        alu_b_sel = alu_b_sel_decoder; bank_out_sel = bank_out_sel_decoder;
+        source_reg_sel = source_reg_sel_decoder;
+      end
 
-          state_next = `fetch;
-        end
-      endcase
-    end
+      `execute:
+      begin
+        case (state_control)
+          2'b00:
+          begin
+            destination_reg_sel = destination_reg_flag_decoder;
+            state_next = `fetch;
+          end
 
+          2'b01:
+            state_next = `operand_fetch;
+
+          2'b10:
+            state_next = `address_fetch;
+
+        endcase
+      end
+
+      `operand_fetch:
+      begin
+        memory_enable_bus = 1'b1;
+        opcode_reg_load_bus = 1'b1;
+        source_next = opcode;
+        pc_next = pc_reg + 1;
+        source_reg_sel = 3'b100;
+        state_next = `operand_load;
+      end
+
+      `operand_load:
+      begin
+        destination_reg_sel = destination_reg_flag_decoder;
+        state_next = `fetch;
+      end
+
+      `address_fetch:
+      begin
+        memory_enable_bus = 1'b1;
+        opcode_reg_load_bus = 1'b1;
+        opcode_reg = opcode;
+        pc_next = pc_reg + 1;
+
+        state_next = `direct_addr;
+      end
+
+      `direct_addr:
+      begin
+        address = opcode_reg;
+        register_bank_enable_bus = 1'b1;
+        memory_load_bus = 1'b1;
+        
+        state_next = `store;
+      end
+
+      `store:
+      begin
+        address = opcode_reg;
+        register_bank_enable_bus = 1'b1;
+        memory_load_bus = 1'b1;
+        write = 1'b1;
+
+        state_next = `fetch;
+      end
+    endcase
+  end
+
+  assign bank_data_in = source_reg;
+    
 endmodule

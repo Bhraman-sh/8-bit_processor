@@ -1,13 +1,13 @@
 module register_file(
   input wire clk, reset,
   input wire [7:0] in_data,
-  input wire [3:0] address,
+  input wire [7:0] address,
   input wire wr, rd,
   output wire [7:0] out_data
 );
 
-  reg [7:0] file [15:0];
-  reg [3:0] addr_reg, addr_next;
+  reg [7:0] file [255:0];
+  reg [7:0] addr_reg, addr_next;
   reg [7:0] write_reg, write_next;
   
   always @(posedge clk, posedge reset)
