@@ -62,8 +62,8 @@ The design includes a custom instruction set and basic memory interaction.
 
 ## ⚙️ CPU Architecture
 
-![CPU Architecture](docs/images/cpu.png)
+![CPU Architecture](Images/cpu.png)
 
 ## **CPU WAVEFORM**
 
-![CPU Waveform Example](docs/images/cpu_wave.png)
+![CPU Waveform Example](Images/cpu_wave.png)
